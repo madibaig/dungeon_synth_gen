@@ -51,8 +51,6 @@ getModePitch uses modeProbMatrices to get a random note from the mode depending
 on the previous pitch (returns a pitch.Pitch object) and sets the octave so that
 the interval between prevPitch and the next pitch is small as can be
 """
-
-
 def get_mode_pitch(prevPitch, mode, keySig):
   degree = keySig.getScaleDegreeFromPitch(prevPitch) - 1
   randomInt = random.randint(0, 99)
@@ -74,6 +72,79 @@ def get_mode_pitch(prevPitch, mode, keySig):
 
   return chosenPitch
 
+"""
+total_length returns the total length (in multiples of quarter note) of rhythms
+where rhythms is a stream of duration objects
+"""
+def total_length(rhythms):
+  sum = 0
+  for d in rhythms:
+    sum += d.quarterLength
+  return sum
+
+"""
+generate_rhythms returns a list of durations (rhythms)
+totalLength is the total length in quarter notes that the rhythms should sum to
+shortestLength is the smallest length rhythm (in quarter notes) that can be used
+longestLength is the longest length rhythm
+interval is the possible rhythmic intervals between shortestLength and longest
+that can be used to pick random durations
+
+the function randomly generates for now, by adding a random multiple of 0.5 to
+shortestLength for each rhythm
+"""
+def generate_rhythms(totalLength, shortestLength, longestLength, interval):
+  #make a stream of durations (rhythms)
+  #add random durations to the stream until motif_length is full then return
+  rhythms = []
+  lengthSoFar = 0
+  while lengthSoFar < totalLength:
+    randomDuration = shortestLength + \
+                     interval * \
+                     random.randint(0, int((longestLength - shortestLength)
+                                           / interval))
+    rhythms.append(duration.Duration(randomDuration))
+    lengthSoFar += randomDuration
+    pass
+  if lengthSoFar != totalLength:
+    lastDur = rhythms.pop().quarterLength
+    rhythms.append(duration.Duration(totalLength - (lengthSoFar - lastDur)))
+  return rhythms
+
+"""
+generate_melody returns a Measure stream object that contains a melody
+keySig should be a key.Key object (the key used)
+bars is the length of the melody in bars
+motifLength is the length of the melodic phrase used in bars (this is not 
+implemented yet so for now just put the same value as bars)
+shortestLength is the shortest length rhythm that should be used in the melody
+longestLength is the longest length rhythm
+interval is the possible rhythmic intervals between shortestLength and longest
+that can be used to pick random durations
+"""
+
+def generate_melody(
+    keySig, bars, motifLength, shortestLength, longestLength, interval):
+  #generate the rhythms
+  #then for each note/rhythm, pick a random pitch
+  rhythms = generate_rhythms(motifLength * 4,
+                             shortestLength, longestLength, interval)
+  #remember to to deal with motifLength
+
+  melody = stream.Measure(number=1)
+  melody.append(keySig)
+  prevPitch = keySig.getPitches()[0]
+  prevPitch.octave = 5
+
+  for i in rhythms:
+    tmpNote = note.Note()
+    prevPitch = get_mode_pitch(prevPitch, keySig.mode, keySig)
+    tmpNote.pitch = prevPitch
+    tmpNote.duration = i
+    melody.append(tmpNote)
+
+  return melody
+
 if __name__ == '__main__':
   # pick a random mode
   # so random mode from aeolian, dorian, phrygian, locrian
@@ -94,19 +165,7 @@ if __name__ == '__main__':
   # pick random tonic for the mode
   keySig.tonic = pitch.Pitch(random.randint(0, 11))
 
-  #keySig.show('text')
-
-  melody = stream.Measure(number=1)
-  melody.append(keySig)
-  prevPitch = keySig.getPitches()[0]
-  prevPitch.octave = 5
-  for i in range(16):
-    tmpNote = note.Note()
-    prevPitch = get_mode_pitch(prevPitch, mode, keySig)
-    tmpNote.pitch = prevPitch
-    #print (tmpNote.pitch.ps)
-    #print(tmpNote.nameWithOctave)
-    melody.append(tmpNote)
+  melody = generate_melody(keySig, 4, 4, 0.5, 0.5, 0.5)
 
   melody.show('text')
   melody.show('midi')

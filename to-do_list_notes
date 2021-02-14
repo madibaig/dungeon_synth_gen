@@ -1,0 +1,20 @@
+chord progression generator
+the different instrument parts possible and how to pick them
+random rhythm generation in the melody generation that sounds good
+bass generator?
+random structure generator
+
+after the midi generation part is done:
+somehow convert midi to actual audio of each part playing their generated midi
+
+add options to main like deciding what key or deciding how long etc
+organization
+reading mode probabilities from a file rather than global variables maybe
+
+
+notes
+
+melody generation aspects
+- how many bars
+- maybe using short motifs that get edited
+- rhythm speed?
