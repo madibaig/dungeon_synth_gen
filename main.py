@@ -44,20 +44,35 @@ modeProbMatrices = {
 }
 
 """
-prevPitch is a number from [0,6] which corresponds to the degrees of the mode
+prevPitch is a pitch.Pitch object of the previous note in the melody
 mode is a str (aeolian|dorian|phyrgian|locrian)
+keySig is a key.Key object (the mode keysignature)
 getModePitch uses modeProbMatrices to get a random note from the mode depending
-on the previous pitch (returns [0-6])
+on the previous pitch (returns a pitch.Pitch object) and sets the octave so that
+the interval between prevPitch and the next pitch is small as can be
 """
 
 
-def get_mode_pitch(prevPitch, mode):
+def get_mode_pitch(prevPitch, mode, keySig):
+  degree = keySig.getScaleDegreeFromPitch(prevPitch) - 1
   randomInt = random.randint(0, 99)
-  for n in range(7):
-    prob = modeProbMatrices.get(mode)[prevPitch + 1][n]
-    if randomInt < prob:
-      return n
+  chosenPitch = pitch.Pitch()
 
+  #pick random degree of mode
+  probArray = modeProbMatrices.get(mode)[degree + 1]
+  for n in range(7):
+    if randomInt < probArray[n]:
+      chosenPitch = keySig.getPitches()[n]
+      break
+
+  #choose octave so its the smallest interval to prevPitch
+  chosenPitch.octave = 5
+  if abs(prevPitch.midi - (chosenPitch.midi - 12)) < abs(prevPitch.midi - chosenPitch.midi):
+    chosenPitch.octave -= 1
+  elif abs(prevPitch.midi - (chosenPitch.midi + 12)) < abs(prevPitch.midi - chosenPitch.midi):
+    chosenPitch.octave += 1
+
+  return chosenPitch
 
 if __name__ == '__main__':
   # pick a random mode
@@ -79,15 +94,18 @@ if __name__ == '__main__':
   # pick random tonic for the mode
   keySig.tonic = pitch.Pitch(random.randint(0, 11))
 
-  keySig.show('text')
+  #keySig.show('text')
 
   melody = stream.Measure(number=1)
   melody.append(keySig)
-  prevPitch = -1
+  prevPitch = keySig.getPitches()[0]
+  prevPitch.octave = 5
   for i in range(16):
     tmpNote = note.Note()
-    prevPitch = get_mode_pitch(prevPitch, mode)
-    tmpNote.pitch = keySig.getPitches()[prevPitch]
+    prevPitch = get_mode_pitch(prevPitch, mode, keySig)
+    tmpNote.pitch = prevPitch
+    #print (tmpNote.pitch.ps)
+    #print(tmpNote.nameWithOctave)
     melody.append(tmpNote)
 
   melody.show('text')
