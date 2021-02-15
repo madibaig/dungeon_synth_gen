@@ -3,6 +3,7 @@ import random
 
 # these matrices are the probabilities of picking that degree of the scale/mode
 # according to what degree the previous note was
+# TODO move these to a file
 aeolianProbabilities = [[30, 40, 45, 55, 80, 85, 99],  # first note
                         [3, 55, 55, 60, 65, 70, 99],  # tonic
                         [40, 43, 70, 80, 85, 95, 99],  # supertonic
@@ -45,19 +46,18 @@ modeProbMatrices = {
 
 """
 prevPitch is a pitch.Pitch object of the previous note in the melody
-mode is a str (aeolian|dorian|phyrgian|locrian)
 keySig is a key.Key object (the mode keysignature)
 getModePitch uses modeProbMatrices to get a random note from the mode depending
 on the previous pitch (returns a pitch.Pitch object) and sets the octave so that
 the interval between prevPitch and the next pitch is small as can be
 """
-def get_mode_pitch(prevPitch, mode, keySig):
+def get_mode_pitch(prevPitch, keySig):
   degree = keySig.getScaleDegreeFromPitch(prevPitch) - 1
   randomInt = random.randint(0, 99)
   chosenPitch = pitch.Pitch()
 
   #pick random degree of mode
-  probArray = modeProbMatrices.get(mode)[degree + 1]
+  probArray = modeProbMatrices.get(keySig.mode)[degree + 1]
   for n in range(7):
     if randomInt < probArray[n]:
       chosenPitch = keySig.getPitches()[n]
@@ -65,9 +65,11 @@ def get_mode_pitch(prevPitch, mode, keySig):
 
   #choose octave so its the smallest interval to prevPitch
   chosenPitch.octave = 5
-  if abs(prevPitch.midi - (chosenPitch.midi - 12)) < abs(prevPitch.midi - chosenPitch.midi):
+  if abs(prevPitch.midi - (chosenPitch.midi - 12)) \
+      < abs(prevPitch.midi - chosenPitch.midi):
     chosenPitch.octave -= 1
-  elif abs(prevPitch.midi - (chosenPitch.midi + 12)) < abs(prevPitch.midi - chosenPitch.midi):
+  elif abs(prevPitch.midi - (chosenPitch.midi + 12)) \
+      < abs(prevPitch.midi - chosenPitch.midi):
     chosenPitch.octave += 1
 
   return chosenPitch
@@ -145,7 +147,7 @@ def generate_melody(
       motif.append(restNote)
     else:
       tmpNote = note.Note()
-      prevPitch = get_mode_pitch(prevPitch, keySig.mode, keySig)
+      prevPitch = get_mode_pitch(prevPitch, keySig)
       tmpNote.pitch = prevPitch
       tmpNote.duration = i
       motif.append(tmpNote)
@@ -160,7 +162,7 @@ def generate_melody(
     numberOfPitchVaries = random.randint(1, 4)
     for n in range(1, numberOfPitchVaries):
       lastMotif[-n].pitch = \
-        get_mode_pitch(lastMotif[-n].pitch, keySig.mode, keySig)
+        get_mode_pitch(lastMotif[-n].pitch, keySig)
     #could add other possible varies like grace notes, rhythms, cutting notes
 
   return melody
