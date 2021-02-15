@@ -4,37 +4,37 @@ import random
 # these matrices are the probabilities of picking that degree of the scale/mode
 # according to what degree the previous note was
 aeolianProbabilities = [[30, 40, 45, 55, 80, 85, 99],  # first note
-                        [10, 55, 55, 60, 65, 70, 99],  # tonic
-                        [40, 45, 70, 80, 85, 95, 99],  # supertonic
-                        [15, 40, 45, 70, 85, 95, 99],  # mediant
-                        [5, 15, 45, 50, 85, 95, 99],  # subdominant
-                        [5, 10, 15, 50, 55, 90, 99],  # dominant
-                        [10, 15, 20, 30, 65, 70, 99],  # submediant
-                        [35, 40, 45, 50, 55, 60, 99]]  # leading
-dorianProbabilities = [[30, 40, 45, 55, 80, 85, 99],  # first note
-                        [10, 55, 55, 60, 65, 70, 99],  # tonic
-                        [40, 45, 70, 80, 85, 95, 99],  # supertonic
-                        [15, 40, 45, 70, 85, 95, 99],  # mediant
-                        [5, 15, 45, 50, 85, 95, 99],  # subdominant
-                        [5, 10, 15, 50, 55, 90, 99],  # dominant
-                        [10, 15, 20, 30, 65, 70, 99],  # submediant
-                        [35, 40, 45, 50, 55, 60, 99]]  # leading
-phrygianProbabilities = [[30, 40, 45, 55, 80, 85, 99],  # first note
-                        [10, 55, 55, 60, 65, 70, 99],  # tonic
-                        [40, 45, 70, 80, 85, 95, 99],  # supertonic
-                        [15, 40, 45, 70, 85, 95, 99],  # mediant
-                        [5, 15, 45, 50, 85, 95, 99],  # subdominant
-                        [5, 10, 15, 50, 55, 90, 99],  # dominant
-                        [10, 15, 20, 30, 65, 70, 99],  # submediant
-                        [35, 40, 45, 50, 55, 60, 99]]  # leading
+                        [3, 55, 55, 60, 65, 70, 99],  # tonic
+                        [40, 43, 70, 80, 85, 95, 99],  # supertonic
+                        [15, 40, 43, 70, 85, 95, 99],  # mediant
+                        [5, 15, 45, 48, 85, 95, 99],  # subdominant
+                        [5, 10, 15, 50, 53, 90, 99],  # dominant
+                        [10, 15, 20, 30, 65, 68, 99],  # submediant
+                        [35, 40, 45, 50, 55, 95, 99]]  # leading
+dorianProbabilities =  [[30, 40, 45, 55, 80, 85, 99],  # first note
+                        [3, 55, 55, 60, 65, 70, 99],  # tonic
+                        [40, 43, 70, 80, 85, 95, 99],  # supertonic
+                        [15, 40, 43, 70, 85, 95, 99],  # mediant
+                        [5, 15, 45, 48, 85, 95, 99],  # subdominant
+                        [5, 10, 15, 50, 53, 90, 99],  # dominant
+                        [10, 15, 20, 30, 65, 68, 99],  # submediant
+                        [35, 40, 45, 50, 55, 95, 99]]  # leading
+phrygianProbabilities =[[30, 40, 45, 55, 80, 85, 99],  # first note
+                        [3, 55, 55, 60, 65, 70, 99],  # tonic
+                        [40, 43, 70, 80, 85, 95, 99],  # supertonic
+                        [15, 40, 43, 70, 85, 95, 99],  # mediant
+                        [5, 15, 45, 48, 85, 95, 99],  # subdominant
+                        [5, 10, 15, 50, 53, 90, 99],  # dominant
+                        [10, 15, 20, 30, 65, 68, 99],  # submediant
+                        [35, 40, 45, 50, 55, 95, 99]]  # leading
 locrianProbabilities = [[30, 40, 45, 55, 80, 85, 99],  # first note
-                        [10, 55, 55, 60, 65, 70, 99],  # tonic
-                        [40, 45, 70, 80, 85, 95, 99],  # supertonic
-                        [15, 40, 45, 70, 85, 95, 99],  # mediant
-                        [5, 15, 45, 50, 85, 95, 99],  # subdominant
-                        [5, 10, 15, 50, 55, 90, 99],  # dominant
-                        [10, 15, 20, 30, 65, 70, 99],  # submediant
-                        [35, 40, 45, 50, 55, 60, 99]]  # leading
+                        [3, 55, 55, 60, 65, 70, 99],  # tonic
+                        [40, 43, 70, 80, 85, 95, 99],  # supertonic
+                        [15, 40, 43, 70, 85, 95, 99],  # mediant
+                        [5, 15, 45, 48, 85, 95, 99],  # subdominant
+                        [5, 10, 15, 50, 53, 90, 99],  # dominant
+                        [10, 15, 20, 30, 65, 68, 99],  # submediant
+                        [35, 40, 45, 50, 55, 95, 99]]  # leading
 
 modeProbMatrices = {
   "aeolian": aeolianProbabilities,
@@ -125,23 +125,43 @@ that can be used to pick random durations
 
 def generate_melody(
     keySig, bars, motifLength, shortestLength, longestLength, interval):
+  motifRepeats = int(bars / motifLength)
   #generate the rhythms
   #then for each note/rhythm, pick a random pitch
   rhythms = generate_rhythms(motifLength * 4,
                              shortestLength, longestLength, interval)
-  #remember to to deal with motifLength
+  #remember to deal with motifLength
 
-  melody = stream.Measure(number=1)
-  melody.append(keySig)
+  motif = stream.Measure(number=1)
+  motif.append(keySig)
   prevPitch = keySig.getPitches()[0]
   prevPitch.octave = 5
 
   for i in rhythms:
-    tmpNote = note.Note()
-    prevPitch = get_mode_pitch(prevPitch, keySig.mode, keySig)
-    tmpNote.pitch = prevPitch
-    tmpNote.duration = i
-    melody.append(tmpNote)
+    if random.randint(0, 100) > 95:
+      #10% chance of a rest note
+      restNote = note.Rest()
+      restNote.duration = i
+      motif.append(restNote)
+    else:
+      tmpNote = note.Note()
+      prevPitch = get_mode_pitch(prevPitch, keySig.mode, keySig)
+      tmpNote.pitch = prevPitch
+      tmpNote.duration = i
+      motif.append(tmpNote)
+
+  melody = stream.Measure()
+  melody.repeatAppend(motif, motifRepeats)
+
+  #vary the last motif repetition (25% chance)
+  if random.randint(0, 3) > 1:
+    lastMotif = melody.getElementsByClass(stream.Measure)[-1]
+    #vary pitches of 4 last notes (possibly)
+    numberOfPitchVaries = random.randint(1, 4)
+    for n in range(1, numberOfPitchVaries):
+      lastMotif[-n].pitch = \
+        get_mode_pitch(lastMotif[-n].pitch, keySig.mode, keySig)
+    #could add other possible varies like grace notes, rhythms, cutting notes
 
   return melody
 
@@ -165,7 +185,7 @@ if __name__ == '__main__':
   # pick random tonic for the mode
   keySig.tonic = pitch.Pitch(random.randint(0, 11))
 
-  melody = generate_melody(keySig, 4, 4, 0.5, 0.5, 0.5)
+  melody = generate_melody(keySig, 4, 2, 0.5, 1, 0.5)
 
   melody.show('text')
   melody.show('midi')
