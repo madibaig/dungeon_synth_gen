@@ -3,6 +3,7 @@ the different instrument parts possible and how to pick them
 random rhythm generation in the melody generation that sounds good
 bass generator?
 random structure generator
+pedal point loop to inforce mode's root
 
 after the midi generation part is done:
 somehow convert midi to actual audio of each part playing their generated midi

@@ -44,6 +44,16 @@ modeProbMatrices = {
   "locrian": locrianProbabilities
 }
 
+#Add this offset to the root pitch of the mode to get the root node of the
+#corresponding minor key signature
+
+modeKeySigOffsets = {
+  "aeolian": 0,
+  "dorian": 7,
+  "phrygian": 5,
+  "locrian": 10
+}
+
 """
 prevPitch is a pitch.Pitch object of the previous note in the melody
 keySig is a key.Key object (the mode keysignature)
@@ -101,10 +111,13 @@ def generate_rhythms(totalLength, shortestLength, longestLength, interval):
   rhythms = []
   lengthSoFar = 0
   while lengthSoFar < totalLength:
-    randomDuration = shortestLength + \
+    if interval != 0:
+      randomDuration = shortestLength + \
                      interval * \
                      random.randint(0, int((longestLength - shortestLength)
                                            / interval))
+    else:
+      randomDuration = shortestLength
     rhythms.append(duration.Duration(randomDuration))
     lengthSoFar += randomDuration
     pass
@@ -117,16 +130,15 @@ def generate_rhythms(totalLength, shortestLength, longestLength, interval):
 generate_melody returns a Measure stream object that contains a melody
 keySig should be a key.Key object (the key used)
 bars is the length of the melody in bars
-motifLength is the length of the melodic phrase used in bars (this is not 
-implemented yet so for now just put the same value as bars)
+motifLength is the length of the melodic phrase used in bars
 shortestLength is the shortest length rhythm that should be used in the melody
 longestLength is the longest length rhythm
 interval is the possible rhythmic intervals between shortestLength and longest
 that can be used to pick random durations
+if interval not being used use 0 as interval
 """
-
-def generate_melody(
-    keySig, bars, motifLength, shortestLength, longestLength, interval):
+def generate_melody(keySig, bars, motifLength, shortestLength, longestLength,
+                    interval, restProb):
   motifRepeats = int(bars / motifLength)
   #generate the rhythms
   #then for each note/rhythm, pick a random pitch
@@ -140,7 +152,7 @@ def generate_melody(
   prevPitch.octave = 5
 
   for i in rhythms:
-    if random.randint(0, 100) > 95:
+    if random.randint(0, 99) >= 100 - restProb:
       #10% chance of a rest note
       restNote = note.Rest()
       restNote.duration = i
@@ -161,11 +173,43 @@ def generate_melody(
     #vary pitches of 4 last notes (possibly)
     numberOfPitchVaries = random.randint(1, 4)
     for n in range(1, numberOfPitchVaries):
-      lastMotif[-n].pitch = \
-        get_mode_pitch(lastMotif[-n].pitch, keySig)
+      if not lastMotif[-n] is note.Rest:
+        lastMotif[-n].pitch = \
+          get_mode_pitch(lastMotif[-n].pitch, keySig)
     #could add other possible varies like grace notes, rhythms, cutting notes
 
   return melody
+
+def generate_chords(keySig, bars, chordLength):
+  minorKeyPitch = (keySig.tonic.pitchClass + modeKeySigOffsets.get(keySig.mode)) % 12
+  minorKeySig = key.Key()
+  minorKeySig.mode = "aeolian"
+  minorKeySig.tonic = pitch.Pitch(minorKeyPitch)
+  rootNotes = generate_melody(minorKeySig, bars, bars, chordLength, chordLength, 0, 0)
+
+  rootNotes.show('text')
+  chords = stream.Measure()
+  for root in rootNotes[0].notes:
+    root.show('text')
+    curChord = chord.Chord()
+    rootDegree = minorKeySig.getScaleDegreeFromPitch(root.pitch)
+    curChord.add(root)
+    #chance of not having middle note to cause power chord
+    if random.randint(0, 99) > 20:
+      curChord.add(note.Note(minorKeySig.getPitches()[((rootDegree + 2) % 7)]))
+    curChord.add(note.Note(minorKeySig.getPitches()[((rootDegree + 4) % 7)]))
+    #possible 7th note
+    if random.randint(0, 99) > 70:
+      curChord.add(note.Note(minorKeySig.getPitches()[((rootDegree + 6) % 7)]))
+    for chordNote in curChord:
+      pitchNote = chordNote.pitch
+      pitchNote.midi -= 12
+      chordNote.pitch = pitchNote
+    curChord.duration = root.duration
+    curChord.show('text')
+    chords.append(curChord)
+
+  return chords
 
 if __name__ == '__main__':
   # pick a random mode
@@ -187,7 +231,12 @@ if __name__ == '__main__':
   # pick random tonic for the mode
   keySig.tonic = pitch.Pitch(random.randint(0, 11))
 
-  melody = generate_melody(keySig, 4, 2, 0.5, 1, 0.5)
+  result = stream.Stream()
+  melody = generate_melody(keySig, 4, 2, 0.5, 1, 0.5, 10)
+  result.append(melody)
+  chords = generate_chords(keySig, 4, 4)
+  result.append(chords)
+  result[-1].offset = 0
 
-  melody.show('text')
-  melody.show('midi')
+  result.show('text')
+  result.show('midi')
